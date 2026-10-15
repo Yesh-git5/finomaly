@@ -1,8 +1,8 @@
-# GSTGuard --- AI-Powered GST Filing Anomaly Detection
+# Finomaly --- AI-Powered GST Filing Anomaly Detection
 
 > **Find the unusual. Understand the risk. Make GST audits smarter.**
 
-GSTGuard is a prototype concept for an AI-powered GST filing anomaly
+Finomaly is a prototype concept for an AI-powered GST filing anomaly
 detection and risk-review platform. It is designed to help users examine
 invoice records, identify unusual patterns, prioritize cases for review,
 and understand why a record was flagged.
