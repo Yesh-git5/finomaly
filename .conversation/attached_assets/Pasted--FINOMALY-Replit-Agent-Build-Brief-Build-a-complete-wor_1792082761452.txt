@@ -1,0 +1,264 @@
+# FINOMALY: Replit Agent Build Brief
+
+Build a complete, working full-stack prototype called **Finomaly**. Follow every section exactly. Do not ask clarifying questions; make sensible choices where something is unspecified. Make it run end-to-end with pre-seeded data on first launch.
+
+---
+
+## 1. PRODUCT OVERVIEW
+
+**Name:** Finomaly
+
+**One-line description:** Context-aware ML and rule-based anomaly detection that flags suspicious GST invoices and filing mismatches before they become penalties.
+
+**Core problem it solves:** MSMEs and their accountants manually review hundreds of GST invoices per month. Errors and fraud slip through: invalid GSTINs, wrong tax math, duplicate invoices, fake or spiking vendor bills, and ITC (Input Tax Credit) mismatches. These cause notices, blocked ITC, and penalties. A fixed amount threshold fails because "normal" differs for every vendor. Finomaly compares each invoice to that vendor's own history and to GST rules, then explains why it was flagged.
+
+**Target users:**
+- MSME owners and shopkeepers
+- Chartered accountants and GST practitioners
+- Internal finance and audit teams
+
+**Principle (show this in the UI):** *An anomaly is not proof of fraud.* Finomaly is decision support. A human makes the final call through a review workflow.
+
+---
+
+## 2. FULL FEATURE LIST (priority order)
+
+### Core (must work)
+1. **Dashboard** with KPI cards: Total Invoices, Flagged Invoices, High-Risk Count, Amount At Risk (₹), Average Risk Score, Pending Reviews. KPI numbers animate with a count-up.
+2. **Charts:** risk distribution donut (Low/Medium/High), 12-month invoice volume vs flagged trend line, top 5 riskiest vendors bar chart, and anomaly-type breakdown bar chart.
+3. **Analyze Invoice page** with two tabs:
+   - **Manual Entry** form
+   - **Upload Image/PDF.** Run OCR (pytesseract) if the Tesseract binary is available. Otherwise use a graceful fallback that pre-fills the form with simulated extracted fields and shows the note "OCR simulated in demo mode". The user can always edit extracted fields before analysis.
+4. **Hybrid detection engine** combining:
+   - **Isolation Forest** (scikit-learn), unsupervised, run on engineered features.
+   - **Per-vendor historical profiling:** z-score and IQR of invoice amount, item count and tax ratio against that vendor's history.
+   - **GST rule engine** (see section 6).
+5. **Risk score 0–100** with a level: Low (0–39), Medium (40–69), High (70–100).
+6. **Explainability panel:** every flagged invoice shows human-readable reason codes with severity, and a "feature contribution" horizontal bar chart showing which features pushed the score up.
+7. **Invoice History** table with search, filters (risk level, vendor, status, date range), sorting, pagination, and CSV export.
+8. **Invoice Detail page** with the full invoice, risk gauge, reasons, a "compared to vendor's normal" mini-chart (this invoice vs the vendor's amount distribution), and the review action buttons.
+9. **Review Workflow:** statuses `Pending → Verified Genuine | Needs Correction | Escalated`. Reviewers add notes, and an audit log records who changed what and when. A Review Queue page lists High/Medium invoices awaiting review.
+10. **Vendors page** (cards or table) and **Vendor Profile page** with vendor stats, average and median invoice value, typical GST rate, a timeline chart of invoices with anomalies highlighted, and a vendor risk score.
+
+### Impressive extras (judge wow-factor)
+11. **ITC Reconciliation page:** upload (or use the sample) purchase-register CSV vs mock GSTR-2B CSV. Show a matched / missing-in-2B / amount-mismatch / extra-in-2B summary, a result table, and the total ITC at risk.
+12. **Demo Mode / Fraud Simulator:** a button "Inject Fraud Scenario" with a dropdown (Spike Amount, Duplicate Invoice, Invalid GSTIN, Tax Mismatch, Just-Below-Threshold Splitting, Round-Number Bills). It creates a realistic bad invoice, runs it live, and navigates to the result with a dramatic animated risk-gauge reveal.
+13. **Natural-language explanation** (a 2–3 sentence plain-English summary). By default it is template-generated from the reason codes. If an `ANTHROPIC_API_KEY` secret exists, optionally call the API to rewrite it; it must work without the key.
+14. **GSTIN validator** with checksum, state-code lookup and PAN extraction, with live validation in the form (green tick or red cross as the user types).
+15. **Model Insights page:** model info (Isolation Forest, contamination, features used), a score distribution histogram, and an honest "Limitations & Responsible Use" card stating the model is trained on synthetic data and is not proof of fraud.
+16. **Batch CSV upload:** analyze many invoices at once and show a summary toast and results table.
+17. **Dark/light theme toggle**, a global command-style search box, and PDF/CSV export of a flagged-invoice report (CSV at minimum).
+18. **Notifications bell** listing the latest High-risk detections.
+
+---
+
+## 3. TECH STACK
+
+**Frontend**
+- React 18 + Vite (JavaScript, not TypeScript)
+- Tailwind CSS
+- React Router v6
+- Recharts for charts
+- framer-motion for animations
+- lucide-react for icons
+- axios for API calls
+- react-hot-toast for toasts
+- react-dropzone for file upload
+
+**Backend**
+- Python 3.11 + Flask + flask-cors
+- scikit-learn (IsolationForest), pandas, numpy, joblib
+- SQLAlchemy + SQLite (file `finomaly.db`)
+- Pillow + pytesseract (optional OCR; wrap imports in try/except)
+- python-dateutil
+- Optional: `anthropic` SDK, only if `ANTHROPIC_API_KEY` is set
+
+**Run setup**
+- Flask runs on port 8000 (`/api/*`).
+- Vite dev server runs on port 5000 with a proxy so `/api` forwards to `http://localhost:8000`.
+- Configure the Replit `.replit` run command to start both (use `concurrently`, or a `start.sh` that launches Flask in the background and then Vite). The app must open in the Replit webview on port 5000 with no manual steps.
+- On first backend start, if the DB is empty, run the seed script and train the model automatically.
+
+**Project structure**
+```
+/backend
+  app.py
+  models.py            # SQLAlchemy models
+  seed.py              # synthetic data generator
+  ml/
+    features.py        # feature engineering
+    detector.py        # IsolationForest train/predict/explain
+    rules.py           # GST rule engine
+    gstin.py           # GSTIN validation
+    reconcile.py
+  ocr.py
+  requirements.txt
+/frontend
+  src/pages, src/components, src/lib/api.js, src/context/ThemeContext.jsx
+  index.html, tailwind.config.js, vite.config.js
+/data
+  sample_purchase_register.csv
+  sample_gstr2b.csv
+  sample_batch_invoices.csv
+start.sh
+```
+
+---
+
+## 4. PAGES & USER FLOW
+
+**Layout:** a persistent left sidebar (collapsible on mobile) with the Finomaly logo and nav, and a top bar with the global search, theme toggle, notifications bell and an avatar ("Demo User · CA Firm").
+
+| Route | Page | Purpose and navigation |
+|---|---|---|
+| `/` | **Dashboard** | KPIs, charts, "Recent High-Risk Invoices" list (click → Invoice Detail). Hero buttons: "Analyze New Invoice" → `/analyze`; "Run Fraud Simulator" → `/simulator`. |
+| `/analyze` | **Analyze Invoice** | Tabs for Manual Entry / Upload Image. On submit, show a loading shimmer (about 1.2 s), then an animated result panel with the risk gauge, reasons, explanation and feature-contribution chart. Buttons: "Save to History" (the invoice is saved automatically; confirm with a toast), "View Full Detail" → `/invoices/:id`, "Analyze Another". |
+| `/invoices` | **Invoice History** | Filterable table. Row click → `/invoices/:id`. Buttons: Export CSV, Batch Upload (modal). |
+| `/invoices/:id` | **Invoice Detail** | Full analysis and review actions. Links to the vendor profile. |
+| `/review` | **Review Queue** | Kanban-style 3 columns (Pending / Needs Correction / Escalated) plus a Verified count. Cards are clickable. |
+| `/vendors` | **Vendors** | Grid of vendor cards (name, GSTIN, risk badge, invoice count). Click → `/vendors/:id`. |
+| `/vendors/:id` | **Vendor Profile** | Stats, amount timeline with anomalies in red, tax-rate pie, and the vendor's invoices. |
+| `/reconcile` | **ITC Reconciliation** | Dropzone for two CSVs plus a "Use Sample Data" button; results summary cards and a mismatch table. |
+| `/simulator` | **Fraud Simulator** | Scenario cards. Click one → inject → redirect to the new Invoice Detail with a reveal animation. |
+| `/insights` | **Model Insights** | Model details, histogram, feature list, responsible-use card. |
+
+**Core demo flow (make this flawless):** Dashboard → Fraud Simulator → pick "Spike Amount" → animated High-Risk result → Review Queue → mark "Escalated" with a note → Dashboard KPIs update.
+
+---
+
+## 5. UI & DESIGN INSTRUCTIONS
+
+- **Style:** modern fintech SaaS, clean, spacious, rounded-2xl cards, soft shadows, subtle glassmorphism on hero and KPI cards. Dark mode is the default; light mode is fully supported via Tailwind `class` strategy.
+- **Colors (dark):** background `#0B1020`, surface `#121A2F`, border `#1F2A48`, primary indigo `#6366F1`, accent cyan `#22D3EE`, text `#E5E9F5`, muted `#8A94B2`.
+- **Colors (light):** background `#F6F8FC`, surface `#FFFFFF`, border `#E3E8F2`, same primary and accent.
+- **Risk colors (use consistently everywhere):** Low `#10B981` (emerald), Medium `#F59E0B` (amber), High `#F43F5E` (rose).
+- **Fonts:** Inter (UI) and JetBrains Mono (numbers, GSTINs, invoice numbers), loaded from Google Fonts. Display numbers in a tabular style.
+- **Logo:** simple SVG mark (a shield with a pulse/anomaly spike line) plus the wordmark "Finomaly" with a gradient indigo→cyan.
+- **Components and animations:**
+  - Animated semicircular **risk gauge** (SVG, needle/arc sweeps from 0 to the score over 1.2 s with an ease-out, colored by risk level).
+  - KPI count-up animation on load.
+  - Page transitions with framer-motion fade/slide, plus staggered card entrance.
+  - Skeleton loaders on all data fetches.
+  - Pulsing red dot on High-Risk badges.
+  - Risk badges as pills with icons.
+  - Tables with sticky headers and hover highlight.
+  - Toasts for all actions.
+  - Empty states with an icon and a call-to-action.
+  - A persistent footer or banner chip: "Anomaly ≠ fraud. Finomaly assists human review."
+- **Responsive:** fully usable at 375px width (sidebar becomes a bottom or hamburger nav; tables scroll horizontally).
+- Currency formatted as Indian (₹ with lakh/crore grouping via `toLocaleString('en-IN')`). Dates formatted `DD MMM YYYY`.
+
+---
+
+## 6. DATA & APIS
+
+### 6.1 Database models (SQLAlchemy)
+
+**Vendor:** `id, name, gstin, state_code, business_type, registration_date, avg_amount, median_amount, std_amount, typical_gst_rate, invoice_count, risk_score`
+
+**Invoice:** `id, invoice_number, vendor_id, invoice_date, buyer_gstin, place_of_supply (state code), hsn_code, description, item_count, taxable_value, gst_rate, cgst, sgst, igst, total_amount, source (manual|upload|batch|simulator|seed), image_path (nullable), risk_score, risk_level, if_score (raw), reasons (JSON list of {code, severity, message, weight}), feature_contributions (JSON), explanation (text), status (Pending|Verified|Needs Correction|Escalated), created_at`
+
+**ReviewLog:** `id, invoice_id, action, note, reviewer, timestamp`
+
+**ReconciliationRun:** `id, created_at, matched, missing_in_2b, mismatched, extra_in_2b, itc_at_risk`
+
+### 6.2 REST API (Flask)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/dashboard/summary` | KPIs, risk distribution, monthly trend, top vendors, anomaly-type counts |
+| POST | `/api/invoices/analyze` | Body: invoice JSON. Runs the engine, saves, returns the full result |
+| POST | `/api/invoices/upload` | multipart image → OCR (or simulated) → returns extracted fields (does not save) |
+| POST | `/api/invoices/batch` | multipart CSV → analyzes all rows |
+| GET | `/api/invoices` | Query: `q, risk, vendor_id, status, from, to, page, per_page, sort` |
+| GET | `/api/invoices/<id>` | Detail plus vendor context (vendor amount history array) |
+| POST | `/api/invoices/<id>/review` | Body `{action, note}` → updates status, writes ReviewLog |
+| GET | `/api/vendors` / `/api/vendors/<id>` | List and profile with invoice timeline |
+| GET | `/api/gstin/validate?gstin=...` | Returns `{valid, state, state_code, pan, reason}` |
+| POST | `/api/simulate` | Body `{scenario}` → creates, analyzes and saves a crafted anomalous invoice |
+| POST | `/api/reconcile` | Two CSVs (or `{use_sample:true}`) → summary and rows |
+| GET | `/api/model/info` | Features, params, score histogram, trained-at |
+| GET | `/api/notifications` | Latest 10 High-risk invoices |
+| GET | `/api/export/invoices.csv` | Filtered export |
+
+### 6.3 External APIs
+No paid or key-gated API is required, and the app must be fully functional offline. Do not call any GST government portal (they require authentication). Use these local and optional resources only:
+- **Local:** Tesseract OCR through pytesseract (optional, with fallback).
+- **Optional:** Anthropic Messages API `POST https://api.anthropic.com/v1/messages`, only if the `ANTHROPIC_API_KEY` secret exists, to rewrite the explanation text. Wrap it in try/except and fall back to the template.
+- **Static data embedded in code:** the GST state-code table (01–38, e.g. 27 Maharashtra, 29 Karnataka, 33 Tamil Nadu, 36 Telangana, 07 Delhi, 24 Gujarat, 09 Uttar Pradesh, 19 West Bengal) and valid GST slabs `[0, 5, 12, 18, 28]`.
+
+### 6.4 Feature engineering (`features.py`)
+For each invoice, compute:
+`log_total_amount`, `taxable_value`, `item_count`, `effective_tax_ratio` (tax/taxable), `gst_rate`, `vendor_amount_zscore`, `vendor_amount_percentile`, `amount_to_vendor_median_ratio`, `days_since_vendor_last_invoice`, `is_round_amount` (amount % 1000 == 0), `is_weekend`, `invoices_same_day_for_vendor`, `tax_math_error` (abs diff between computed and stated tax).
+For a vendor with fewer than 5 invoices, fall back to global statistics.
+
+### 6.5 Detection engine (`detector.py`, `rules.py`)
+- Train `IsolationForest(n_estimators=200, contamination=0.08, random_state=42)` on the seeded data, on StandardScaler-scaled features. Save with joblib. Retrain endpoint is optional.
+- Convert `decision_function` to a 0–100 anomaly score (min-max normalized against training scores, inverted so higher = riskier).
+- **Rule engine**, each rule returns `{code, severity (low/med/high), message, weight}`:
+  - `INVALID_GSTIN`: regex `^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$` fails, or the checksum (mod-36 algorithm over the first 14 chars, alphabet `0-9A-Z`, weights alternating 1 and 2) fails. Weight 35.
+  - `TAX_MATH_MISMATCH`: stated CGST+SGST+IGST differs from taxable_value × rate by more than ₹1. Weight 30.
+  - `WRONG_TAX_TYPE`: intra-state (vendor state == place of supply) but IGST charged, or inter-state but CGST/SGST charged. Weight 30.
+  - `INVALID_GST_RATE`: rate not in the valid slabs. Weight 30.
+  - `DUPLICATE_INVOICE`: same vendor and invoice_number already exists, or the same vendor, date and total amount. Weight 40.
+  - `AMOUNT_SPIKE`: vendor z-score > 3 or amount > Q3 + 3×IQR. Weight 30.
+  - `JUST_BELOW_THRESHOLD`: total between ₹47,500 and ₹49,999 (the e-way bill ₹50,000 limit) and the vendor has 2 or more such invoices. Weight 20.
+  - `ROUND_AMOUNT`: exact multiple of ₹10,000 with no paise. Weight 10.
+  - `NEW_VENDOR_HIGH_VALUE`: vendor has under 3 invoices and amount above ₹1,00,000. Weight 20.
+  - `FUTURE_OR_STALE_DATE`: date in the future or more than 1 year old. Weight 15.
+  - `HSN_RATE_MISMATCH`: HSN→rate map mismatch for a small mapping (e.g. `1006` rice 5, `8517` phones 18, `6109` t-shirts 5/12, `9983` IT services 18, `3004` medicines 12, `8703` cars 28). Weight 20.
+  - `WEEKEND_BURST`: 4 or more invoices from the same vendor on the same day. Weight 10.
+- **Final score** = `min(100, round(0.45 × if_score + 0.55 × min(100, sum_of_rule_weights)))`.
+  If any `high`-severity rule fires, enforce a minimum score of 70.
+- **Feature contributions:** per feature, compute abs(scaled value) × a small importance weight, normalize to 100%, and return the top 6 for the bar chart.
+- **Explanation template:** "This invoice from {vendor} was flagged {level} risk ({score}/100) mainly because {top 2 reasons in plain words}. Compared with this vendor's usual invoices (median ₹{x}), this one is {ratio}× higher. Recommended action: {verify/correct/escalate}."
+
+### 6.6 Seed data (`seed.py`)
+Create **12 vendors** with realistic Indian names and valid-checksum GSTINs, different amount scales:
+- Sri Lakshmi Traders (33, Tamil Nadu, ~₹8k avg, groceries)
+- Rao Electronics (36, Telangana, ~₹45k)
+- Mehta Textiles (24, Gujarat, ~₹1.2L)
+- Kumar Stationers (29, Karnataka, ~₹3k)
+- Patel Pharma Distributors (24, ~₹60k)
+- Bharat IT Solutions (27, Maharashtra, ~₹2.5L)
+- Delhi Auto Parts (07, ~₹35k)
+- Annapurna Foods (09, ~₹15k)
+- Singh Hardware (07, ~₹22k)
+- Chennai Packaging Co (33, ~₹18k)
+- Eastern Chemicals (19, ~₹90k)
+- QuickServe Logistics (29, ~₹12k)
+
+Generate **about 600 invoices over the last 12 months** (log-normal amounts around each vendor's mean, correct tax math, correct CGST/SGST vs IGST by state, slabs by category, weekday-weighted dates, unique invoice numbers like `SLT/2026/00123`). Inject about 8% anomalies of mixed types (spikes, duplicates, bad GSTIN, tax mismatch, wrong tax type, threshold-hugging, round numbers). Pre-assign a mix of statuses so the Review Queue is populated (about 15 Pending, 5 Escalated, 5 Needs Correction, a few Verified). Add 3 sample CSV files in `/data`, with a purchase register of about 40 rows, a GSTR-2B with about 6 deliberately missing and 5 mismatched amounts, and a batch invoice file of 15 rows with 4 anomalies.
+
+### 6.7 Reconciliation logic
+Match on `(vendor GSTIN, invoice_number)`. Categories: **Matched**, **Missing in GSTR-2B** (ITC at risk = the invoice tax), **Amount Mismatch** (tax differs by more than ₹1), **Extra in 2B**. Return counts, total ITC at risk, and rows.
+
+---
+
+## 7. STEP-BY-STEP BUILD INSTRUCTIONS
+
+1. **Scaffold.** Create the `/backend` and `/frontend` structure above. Initialize the Vite React app, install frontend dependencies (`react-router-dom recharts framer-motion lucide-react axios react-hot-toast react-dropzone`), and set up Tailwind (`darkMode: 'class'`, with the custom colors and fonts from section 5). Create `requirements.txt` (`flask flask-cors flask-sqlalchemy scikit-learn pandas numpy joblib pillow pytesseract python-dateutil requests`) and install it.
+2. **Vite config.** Set the dev server to `host: 0.0.0.0, port: 5000, allowedHosts: true` and a proxy `/api → http://localhost:8000`.
+3. **Backend models.** Create SQLAlchemy models from 6.1 and initialize SQLite on startup.
+4. **GSTIN module.** Implement `gstin.py`: regex check, mod-36 checksum compute and verify, a `generate_valid_gstin(state_code, pan)` helper for seeding, state lookup, and PAN extraction.
+5. **Features and rules.** Implement `features.py` and `rules.py` exactly per 6.4 and 6.5. Write them as pure functions that take an invoice dict and a vendor-stats dict.
+6. **Detector.** Implement `detector.py` with `train()`, `score(invoice, vendor_stats)`, and `explain()`. Persist the model and scaler with joblib, and cache the training score distribution for normalization and the histogram.
+7. **Seed script.** Implement `seed.py` per 6.6. It builds vendors and invoices, trains the model on the seeded data, then scores and stores each invoice's risk fields. Write the three CSVs to `/data`. Hook it so it runs automatically on first start when the DB is empty.
+8. **API.** Implement all endpoints in 6.2 in `app.py` with CORS enabled and JSON errors. `/api/invoices/analyze` must validate required fields, look up or create the vendor by GSTIN, recompute vendor stats, run the engine, save, and return the full result (score, level, reasons, contributions, explanation, vendor context). `/api/simulate` builds scenario-specific invoices against a random existing vendor:
+   - **Spike Amount:** about 8× the vendor's median.
+   - **Duplicate Invoice:** copy an existing invoice number.
+   - **Invalid GSTIN:** corrupt one character.
+   - **Tax Mismatch:** understate the tax.
+   - **Just-Below-Threshold Splitting:** 3 invoices of ₹48–49.9k on one day.
+   - **Round-Number Bills:** exact ₹50,000 / ₹1,00,000.
+9. **OCR endpoint.** In `ocr.py`, try pytesseract and parse invoice number, date, GSTIN (regex), taxable value and total from the text. If Tesseract is missing or parsing finds fewer than 3 fields, return plausible simulated fields with `"simulated": true`.
+10. **Reconciliation.** Implement `reconcile.py` and the endpoint per 6.7.
+11. **Verify backend.** Run the backend, confirm the seed worked, and test each endpoint with curl. Confirm the seeded flagged-invoice rate is around 8–12% and the simulator scenarios produce High risk (score ≥ 70).
+12. **Frontend foundations.** Build `ThemeContext` (dark default, persisted in localStorage), `lib/api.js`, the layout (Sidebar, Topbar, footer disclaimer chip), the router, and shared components: `KpiCard`, `RiskBadge`, `RiskGauge` (animated SVG), `ReasonList`, `ContributionChart`, `StatusPill`, `Skeleton`, `EmptyState`, and `GstinInput` (live validation using `/api/gstin/validate`, debounced).
+13. **Pages.** Build in this order: Dashboard → Analyze (manual + upload tabs, result panel) → Invoices (table, filters, pagination, CSV export, batch modal) → Invoice Detail (with vendor-comparison chart and review actions plus log) → Review Queue → Vendors and Vendor Profile → Fraud Simulator → ITC Reconciliation → Model Insights. Wire all data to the API with skeleton loading and error toasts.
+14. **Polish.** Add framer-motion page transitions and staggered card entrance, the KPI count-up, the gauge sweep animation, the pulsing High-risk dot, the notifications bell dropdown, the global search (filters invoices and vendors by name, number or GSTIN), the empty states, the mobile responsive nav, and Indian number formatting everywhere.
+15. **Start script.** Create `start.sh` that starts Flask (port 8000) in the background and Vite (port 5000) in the foreground, and set the Replit run command to execute it. Ensure the app loads in the Webview with no manual steps.
+16. **Test the demo path** end-to-end: open the Dashboard (populated), go to Fraud Simulator → Spike Amount → confirm the High-risk reveal with reasons and explanation → go to Review Queue → set Escalated with a note → return to the Dashboard and confirm KPIs changed. Fix any console or network errors. Also test the manual analyze form with a clean invoice (expect Low risk) and with a corrupted GSTIN (expect High risk).
+17. **README.** Add a short README with a project description, the "anomaly ≠ fraud" disclaimer, a note that the data is synthetic, and the architecture diagram described in text.
+
+**Definition of done:** the app launches with seeded data, every page in section 4 renders without errors, analysis returns a risk score with explanations in under 2 seconds, the simulator works for all 6 scenarios, reconciliation works with the sample data, and the UI is polished in both dark and light mode and on mobile width.

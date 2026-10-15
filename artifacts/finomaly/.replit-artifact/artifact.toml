@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Finomaly"
+description = "A GST invoice risk dashboard for Indian MSMEs and accounting teams. Review invoice anomalies, analyze new invoices, simulate fraud scenarios, and reconcile ITC with human-in-the-loop decisions."
+version = "1.0.0"
+id = "artifacts/finomaly"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22145
+
+[services.development]
+run = "pnpm --filter @workspace/finomaly run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/finomaly", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/finomaly/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22145"
+BASE_PATH = "/"

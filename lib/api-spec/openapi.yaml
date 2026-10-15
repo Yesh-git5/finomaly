@@ -3,13 +3,25 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Finomaly GST invoice risk and review API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Dashboard summaries
+  - name: invoices
+    description: Invoice analysis and history
+  - name: vendors
+    description: Vendor profiles
+  - name: reviews
+    description: Human review workflow
+  - name: insights
+    description: Model insights and notifications
+  - name: reconciliation
+    description: ITC reconciliation
 paths:
   /healthz:
     get:
@@ -24,13 +36,419 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard KPIs and chart data
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /invoices:
+    get:
+      operationId: getInvoices
+      tags: [invoices]
+      summary: Search and filter invoice history
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: risk, in: query, schema: { type: string, enum: [Low, Medium, High] } }
+        - { name: vendorId, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - { name: perPage, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 10 } }
+      responses:
+        "200":
+          description: Paginated invoices
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoicePage"
+    post:
+      operationId: analyzeInvoice
+      tags: [invoices]
+      summary: Analyze and save an invoice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvoiceInput"
+      responses:
+        "201":
+          description: Analyzed invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceDetail"
+  /invoices/{id}:
+    get:
+      operationId: getInvoice
+      tags: [invoices]
+      summary: Get invoice analysis detail
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Invoice detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceDetail"
+        "404":
+          description: Invoice not found
+  /invoices/{id}/review:
+    post:
+      operationId: reviewInvoice
+      tags: [reviews]
+      summary: Update an invoice review status
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "200":
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceDetail"
+  /simulate:
+    post:
+      operationId: simulateScenario
+      tags: [invoices]
+      summary: Create and analyze a fraud-simulator scenario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SimulationInput"
+      responses:
+        "201":
+          description: Simulated invoice
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceDetail"
+  /vendors:
+    get:
+      operationId: getVendors
+      tags: [vendors]
+      summary: List vendors and risk summaries
+      responses:
+        "200":
+          description: Vendors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VendorSummary"
+  /vendors/{id}:
+    get:
+      operationId: getVendor
+      tags: [vendors]
+      summary: Get vendor profile and invoice timeline
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Vendor profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorDetail"
+  /model/info:
+    get:
+      operationId: getModelInfo
+      tags: [insights]
+      summary: Get model parameters and score distribution
+      responses:
+        "200":
+          description: Model information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelInfo"
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [insights]
+      summary: Get latest high-risk detections
+      responses:
+        "200":
+          description: Latest alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InvoiceSummary"
+  /reconcile:
+    post:
+      operationId: reconcileItc
+      tags: [reconciliation]
+      summary: Reconcile purchase register with GSTR-2B
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReconcileInput"
+      responses:
+        "200":
+          description: Reconciliation results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReconcileResult"
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
+        status: { type: string }
+      required: [status]
+    RiskLevel:
+      type: string
+      enum: [Low, Medium, High]
+    InvoiceStatus:
+      type: string
+      enum: [Pending, Verified Genuine, Needs Correction, Escalated]
+    RiskBucket:
+      type: object
+      properties:
+        level: { $ref: "#/components/schemas/RiskLevel" }
+        count: { type: integer }
+      required: [level, count]
+    MonthlyTrend:
+      type: object
+      properties:
+        month: { type: string }
+        invoices: { type: integer }
+        flagged: { type: integer }
+      required: [month, invoices, flagged]
+    AnomalyCount:
+      type: object
+      properties:
+        type: { type: string }
+        count: { type: integer }
+      required: [type, count]
+    Reason:
+      type: object
+      properties:
+        code: { type: string }
+        severity: { type: string, enum: [low, med, high] }
+        message: { type: string }
+        weight: { type: number }
+      required: [code, severity, message, weight]
+    Contribution:
+      type: object
+      properties:
+        feature: { type: string }
+        contribution: { type: number }
+      required: [feature, contribution]
+    ReviewLog:
+      type: object
+      properties:
+        action: { type: string }
+        note: { type: string }
+        reviewer: { type: string }
+        timestamp: { type: string }
+      required: [action, note, reviewer, timestamp]
+    InvoiceSummary:
+      type: object
+      properties:
+        id: { type: string }
+        invoiceNumber: { type: string }
+        vendorId: { type: string }
+        vendorName: { type: string }
+        vendorGstin: { type: string }
+        invoiceDate: { type: string }
+        totalAmount: { type: number }
+        riskScore: { type: number }
+        riskLevel: { $ref: "#/components/schemas/RiskLevel" }
+        status: { $ref: "#/components/schemas/InvoiceStatus" }
+      required: [id, invoiceNumber, vendorId, vendorName, vendorGstin, invoiceDate, totalAmount, riskScore, riskLevel, status]
+    InvoiceDetail:
+      allOf:
+        - $ref: "#/components/schemas/InvoiceSummary"
+        - type: object
+          properties:
+            buyerGstin: { type: string }
+            placeOfSupply: { type: string }
+            hsnCode: { type: string }
+            description: { type: string }
+            itemCount: { type: integer }
+            taxableValue: { type: number }
+            gstRate: { type: number }
+            cgst: { type: number }
+            sgst: { type: number }
+            igst: { type: number }
+            source: { type: string }
+            reasons:
+              type: array
+              items: { $ref: "#/components/schemas/Reason" }
+            featureContributions:
+              type: array
+              items: { $ref: "#/components/schemas/Contribution" }
+            explanation: { type: string }
+            vendorMedian: { type: number }
+            vendorHistory:
+              type: array
+              items: { type: number }
+            reviewLogs:
+              type: array
+              items: { $ref: "#/components/schemas/ReviewLog" }
+    DashboardKpis:
+      type: object
+      properties:
+        totalInvoices: { type: integer }
+        flaggedInvoices: { type: integer }
+        highRiskCount: { type: integer }
+        amountAtRisk: { type: number }
+        averageRiskScore: { type: number }
+        pendingReviews: { type: integer }
+      required: [totalInvoices, flaggedInvoices, highRiskCount, amountAtRisk, averageRiskScore, pendingReviews]
+    VendorSummary:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        gstin: { type: string }
+        state: { type: string }
+        invoiceCount: { type: integer }
+        averageAmount: { type: number }
+        medianAmount: { type: number }
+        riskScore: { type: number }
+      required: [id, name, gstin, state, invoiceCount, averageAmount, medianAmount, riskScore]
+    DashboardSummary:
+      type: object
+      properties:
+        kpis: { $ref: "#/components/schemas/DashboardKpis" }
+        riskDistribution:
+          type: array
+          items: { $ref: "#/components/schemas/RiskBucket" }
+        monthlyTrend:
+          type: array
+          items: { $ref: "#/components/schemas/MonthlyTrend" }
+        topVendors:
+          type: array
+          items: { $ref: "#/components/schemas/VendorSummary" }
+        anomalyTypes:
+          type: array
+          items: { $ref: "#/components/schemas/AnomalyCount" }
+        recentHighRisk:
+          type: array
+          items: { $ref: "#/components/schemas/InvoiceSummary" }
+      required: [kpis, riskDistribution, monthlyTrend, topVendors, anomalyTypes, recentHighRisk]
+    InvoicePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/InvoiceSummary" }
+        total: { type: integer }
+        page: { type: integer }
+        perPage: { type: integer }
+      required: [items, total, page, perPage]
+    InvoiceInput:
+      type: object
+      properties:
+        invoiceNumber: { type: string }
+        vendorName: { type: string }
+        vendorGstin: { type: string }
+        invoiceDate: { type: string }
+        buyerGstin: { type: string }
+        placeOfSupply: { type: string }
+        hsnCode: { type: string }
+        description: { type: string }
+        itemCount: { type: integer }
+        taxableValue: { type: number }
+        gstRate: { type: number }
+        cgst: { type: number }
+        sgst: { type: number }
+        igst: { type: number }
+        totalAmount: { type: number }
+      required: [invoiceNumber, vendorName, vendorGstin, invoiceDate, buyerGstin, placeOfSupply, hsnCode, description, itemCount, taxableValue, gstRate, cgst, sgst, igst, totalAmount]
+    ReviewInput:
+      type: object
+      properties:
+        action:
           type: string
-      required:
-        - status
-
+          enum: [Verified Genuine, Needs Correction, Escalated]
+        note: { type: string }
+      required: [action, note]
+    SimulationInput:
+      type: object
+      properties:
+        scenario:
+          type: string
+          enum: [Spike Amount, Duplicate Invoice, Invalid GSTIN, Tax Mismatch, Just-Below-Threshold Splitting, Round-Number Bills]
+      required: [scenario]
+    VendorDetail:
+      allOf:
+        - $ref: "#/components/schemas/VendorSummary"
+        - type: object
+          properties:
+            typicalGstRate: { type: number }
+            invoices:
+              type: array
+              items: { $ref: "#/components/schemas/InvoiceSummary" }
+            timeline:
+              type: array
+              items:
+                type: object
+                properties:
+                  date: { type: string }
+                  amount: { type: number }
+                  anomaly: { type: boolean }
+                required: [date, amount, anomaly]
+    ModelInfo:
+      type: object
+      properties:
+        algorithm: { type: string }
+        contamination: { type: number }
+        features:
+          type: array
+          items: { type: string }
+        scoreDistribution:
+          type: array
+          items: { type: number }
+        trainedAt: { type: string }
+        dataNote: { type: string }
+      required: [algorithm, contamination, features, scoreDistribution, trainedAt, dataNote]
+    ReconcileInput:
+      type: object
+      properties:
+        useSample: { type: boolean }
+      required: [useSample]
+    ReconcileRow:
+      type: object
+      properties:
+        vendor: { type: string }
+        invoiceNumber: { type: string }
+        status: { type: string }
+        registerTax: { type: number }
+        gstr2bTax: { type: number }
+      required: [vendor, invoiceNumber, status, registerTax, gstr2bTax]
+    ReconcileResult:
+      type: object
+      properties:
+        matched: { type: integer }
+        missingIn2b: { type: integer }
+        mismatched: { type: integer }
+        extraIn2b: { type: integer }
+        itcAtRisk: { type: number }
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/ReconcileRow" }
+      required: [matched, missingIn2b, mismatched, extraIn2b, itcAtRisk, rows]

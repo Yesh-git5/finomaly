@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
+}
+
+:root {
+  color-scheme: light;
+  --background: 210 28% 96%;
+  --foreground: 224 34% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 34% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 34% 15%;
+  --primary: 239 72% 57%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 194 78% 91%;
+  --secondary-foreground: 199 85% 27%;
+  --muted: 214 24% 92%;
+  --muted-foreground: 218 14% 46%;
+  --accent: 191 86% 41%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 2 69% 53%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 216 21% 86%;
+  --input: 216 21% 86%;
+  --ring: 239 72% 57%;
+  --sidebar: 220 34% 13%;
+  --sidebar-foreground: 215 23% 82%;
+  --radius: 0.8rem;
+  --app-font-sans: 'Inter', sans-serif;
+  --app-font-mono: 'JetBrains Mono', monospace;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: 225 31% 8%;
+  --foreground: 218 30% 92%;
+  --card: 222 27% 12%;
+  --card-foreground: 218 30% 92%;
+  --popover: 222 27% 12%;
+  --popover-foreground: 218 30% 92%;
+  --primary: 239 89% 70%;
+  --primary-foreground: 228 37% 10%;
+  --secondary: 223 24% 17%;
+  --secondary-foreground: 208 24% 85%;
+  --muted: 222 23% 16%;
+  --muted-foreground: 217 13% 62%;
+  --accent: 190 89% 53%;
+  --accent-foreground: 224 34% 9%;
+  --destructive: 2 75% 62%;
+  --destructive-foreground: 225 31% 8%;
+  --border: 220 20% 23%;
+  --input: 220 20% 23%;
+  --ring: 239 89% 70%;
+  --sidebar: 225 38% 7%;
+  --sidebar-foreground: 217 19% 74%;
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--app-font-sans);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid hsl(var(--accent)); outline-offset: 2px;
+}
+.mono { font-family: var(--app-font-mono); font-variant-numeric: tabular-nums; }
+.app-shell { min-height: 100dvh; }
+.sidebar { background: hsl(var(--sidebar)); color: hsl(var(--sidebar-foreground)); }
+.main-area { min-height: 100dvh; }
+.surface { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: var(--radius); }
+.quiet-grid {
+  background-image: linear-gradient(hsl(var(--border) / .23) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / .23) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.fade-up { animation: fade-up .38s cubic-bezier(.2,.75,.25,1) both; }
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.nav-link, .button, .table-row, .interactive { transition: color .16s ease, background-color .16s ease, border-color .16s ease, transform .16s ease, opacity .16s ease; }
+.button:active { transform: translateY(1px); }
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: hsl(var(--muted-foreground) / .35) transparent; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
