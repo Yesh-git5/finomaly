@@ -25,8 +25,6 @@ automatically declare a business fraudulent.
 -   [Suggested Technology Stack](#suggested-technology-stack)
 -   [Risk Scoring and Explainability](#risk-scoring-and-explainability)
 -   [Data and Evaluation](#data-and-evaluation)
--   [Three-Minute Hackathon Pitch](#three-minute-hackathon-pitch)
--   [Questions Judges May Ask](#questions-judges-may-ask)
 -   [Limitations and Responsible Use](#limitations-and-responsible-use)
 -   [Future Scope and Scaling](#future-scope-and-scaling)
 -   [Disclaimer](#disclaimer)
@@ -442,65 +440,9 @@ authorized records and verified outcomes.
 
 ------------------------------------------------------------------------
 
-## Three-Minute Hackathon Pitch
-
-### 1. Opening --- The Problem
-
-Good morning, respected judges!
-
-Imagine an auditor having to check hundreds or thousands of GST invoices
-to find a few unusual transactions. It takes time, requires a lot of
-effort, and some important mistakes may go unnoticed.
-
-Duplicate invoices, tax mismatches, and unusual Input Tax Credit claims
-can create problems for businesses and tax auditors.
-
-**So, how can we make GST checking faster, smarter, and easier? That is
-where GSTGuard comes in!**
-
-### 2. Introducing Our Solution
-
-GSTGuard is an AI-powered GST Filing Anomaly Detection System that helps
-identify unusual invoice patterns, calculate risk scores, and prioritize
-records for further review.
-
-Let me show you how our system works.
-
-### 3. How Our Project Works --- Live Demo
-
-First, users can add invoice details manually by entering information
-such as the invoice number, date, vendor name, GSTIN, taxable value, and
-GST rate. They can also upload an invoice document where supported.
-
-The system checks the available details against GST rules and vendor
-history to identify possible errors and unusual patterns.
-
-Our dashboard then displays the number of invoices analyzed, invoices
-flagged for review, potential tax exposure, and risk distribution.
-
-Users can search invoices, view vendor details, and understand which
-records need more attention.
-
-### 4. Review Queue --- What Happens Next?
-
-Once an invoice is flagged, it can be examined in the **Review Queue**.
-
-Each status tells the user what has happened to that invoice:
-
--   **Pending:** The invoice is waiting to be reviewed.
--   **Needs Correction:** A possible error has been identified and needs
-    to be corrected or clarified.
--   **Escalated:** The case needs further attention from a senior
-    reviewer or the appropriate team.
--   **Verified Genuine:** The reviewer has checked the available
-    evidence and confirmed the invoice as genuine.
-
-These are workflow statuses, not automatic fraud decisions. The reviewer
-makes the decision after examining the evidence.
-
 ### 5. ITC Reconciliation, Scenario Lab and Model Insights
 
-GSTGuard also includes additional tools to make the analysis more
+Finomaly also includes additional tools to make the analysis more
 useful.
 
 **ITC Reconciliation** helps compare purchase records with corresponding
@@ -520,7 +462,7 @@ treating its output as a final decision.
 
 ### 6. Our Innovation and Future Scope
 
-What makes GSTGuard useful is that it combines invoice checking,
+What makes Finomaly useful is that it combines invoice checking,
 AI-based anomaly detection, vendor history, risk scoring, and a
 structured review process in one platform.
 
@@ -531,86 +473,12 @@ using verified data.
 Our goal is to help auditors save time, focus on important cases, and
 make better-informed decisions.
 
-To conclude, GSTGuard does not replace auditors. It helps them find
+To conclude, Finomaly does not replace auditors. It helps them find
 unusual patterns and understand where further investigation may be
 needed.
 
-**GSTGuard --- Find the unusual. Understand the risk. Make GST audits
+**Finomaly --- Find the unusual. Understand the risk. Make GST audits
 smarter.**
-
-------------------------------------------------------------------------
-
-## Questions Judges May Ask
-
-### 1. What problem are you solving?
-
-We aim to reduce the effort required to identify unusual GST invoice and
-filing patterns. GSTGuard helps users prioritize records that may need
-further verification.
-
-### 2. Why use AI instead of only fixed rules?
-
-Rules can detect known issues, such as duplicate invoice numbers and
-calculation mismatches. An anomaly-detection model can identify
-combinations of unusual patterns that may not be covered by predefined
-rules. The two approaches complement each other.
-
-### 3. Which machine-learning algorithm do you use?
-
-If implemented, Isolation Forest can be used for unsupervised anomaly
-detection. It identifies records that differ from the overall data
-pattern and can be useful when labelled fraud examples are limited. It
-does not prove fraud.
-
-### 4. How do you know your system is accurate?
-
-We test it using datasets with known, deliberately introduced anomalies
-and compare the flagged records against those test labels. We can report
-precision, recall, and false-positive rates. Real-world performance
-requires evaluation on authorized data with verified outcomes.
-
-### 5. What makes GSTGuard different?
-
-Its proposed differentiator is bringing invoice checks, anomaly
-detection, vendor context, risk prioritization, and a traceable review
-workflow into one platform. Business-network analysis and an
-investigation copilot are potential extensions. Claims of novelty should
-be checked against existing solutions.
-
-### 6. How is the risk score calculated?
-
-A prototype can combine documented signals, such as duplicate invoice
-indicators, mismatches, and unusual patterns, using a defined scoring
-method. The score prioritizes review; it is not automatically the
-probability of fraud.
-
-### 7. What if a genuine business is flagged?
-
-The system should display the evidence and let a human reviewer
-investigate. We can measure false positives and refine the system using
-verified feedback. A flag alone does not establish wrongdoing.
-
-### 8. Where will the GST data come from?
-
-For the prototype, we use synthetic or appropriately authorized sample
-data. A real deployment would require authorized access, suitable
-integrations, permissions, and privacy safeguards. We would not scrape
-confidential taxpayer records.
-
-### 9. Can it scale to millions of invoices?
-
-The architecture can be designed for larger datasets using batch
-processing, database indexing, efficient queries, and analysis of
-relevant subsets. Actual scalability must be demonstrated through
-performance testing.
-
-### 10. What are the limitations and future plans?
-
-Synthetic data cannot fully represent real business behaviour, and
-unusual activity may have a legitimate explanation. Future work includes
-validation using authorized data, stronger evaluation, secure
-integrations, temporal network analysis, and feedback from tax
-professionals.
 
 ------------------------------------------------------------------------
 
@@ -659,12 +527,12 @@ platform for each use case would need to be validated.
 
 ## Disclaimer
 
-GSTGuard is a decision-support prototype concept. It is not an official
+Finomaly is a decision-support prototype concept. It is not an official
 GST system and does not replace professional tax advice, statutory
 verification, or an auditor's judgment. Do not use sample dashboard
 values as evidence of real-world fraud or detection accuracy.
 
 ------------------------------------------------------------------------
 
-**GSTGuard --- Find the unusual. Understand the risk. Make GST audits
+**Finomaly --- Find the unusual. Understand the risk. Make GST audits
 smarter.**
