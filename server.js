@@ -3,7 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { demoInvoices } from './api/invoices.js';
+import { demoInvoices } from './data/demo-invoices.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -832,7 +832,12 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Finomaly] Full-stack application running on http://localhost:${PORT}`);
-  console.log(`[Finomaly] Connected 5 demo invoices covering Circular Chains & Contextual Anomaly.`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Finomaly] Full-stack application running on http://localhost:${PORT}`);
+    console.log(`[Finomaly] Connected 5 demo invoices covering Circular Chains & Contextual Anomaly.`);
+  });
+}
+
+export default app;
+
