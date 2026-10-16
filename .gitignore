@@ -47,3 +47,10 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Python cache & temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+.streamlit/
+

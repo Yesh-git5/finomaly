@@ -1,0 +1,13 @@
+gstin,vendor_name,business_category,scale,state,state_code,historical_median,historical_iqr,typical_gst_rate,risk_category
+33ABCDE1234F1Z5,Sri Lakshmi Traders,Stationery & Office Supplies,Micro,Tamil Nadu,33,8000,2500,18,Low
+36ABCDE1234F1Z5,Rao Tech Solutions,Electronics & IT Hardware,Medium,Telangana,36,55000,18000,18,Medium
+27XYZPA9876K1Z9,Apex Industrial Tools,Machinery & Industrial Hardware,Small,Maharashtra,27,65000,22000,18,High
+29AABCK9988M1Z3,Kuber Enterprises,Wholesale Trading & Broking,Small,Karnataka,29,70000,24000,18,High
+24AAACB5555C1Z1,Bharat Steel & Infrastructure,Heavy Steel & Industrial Metrology,Large,Gujarat,24,420000,85000,18,Low
+29AABCG4321H1Z2,Global IT Solutions Pvt Ltd,Cloud Architecture & SaaS Consulting,Medium,Karnataka,29,85000,25000,18,Medium
+07AAACD1111E1Z4,Delhi Packaging Solutions,Corrugated Boxes & Eco Packaging,Small,Delhi,07,32000,11000,12,Low
+27BBBCB2222D1Z6,Maharani Silk Weavers,Textiles & Apparel,Small,Maharashtra,27,45000,15000,5,Low
+36CCCCE3333F1Z8,Deccan Logistics Network,Logistics & Freight Services,Medium,Telangana,36,120000,35000,18,Low
+29DDDDF4444G1Z0,Nexus Component Labs,Passive Electronic Components,Micro,Karnataka,29,14000,4500,18,Low
+27EEEEM5555H1Z2,Vanguard Security Systems,CCTV & Biometric Access,Small,Maharashtra,27,28000,9000,18,Low
+24FFFFG6666J1Z4,Narmada Chemical Refineries,Specialty Solvents & Reagents,Medium,Gujarat,24,210000,55000,18,Low
